@@ -1,0 +1,56 @@
+version: '3'
+
+networks:
+  my-network:
+
+services:
+  php8.0:
+    build:
+      dockerfile: ../php8-apache.dockerfile
+      context: .
+    image: innovationzone/php8.0-apache
+    container_name: php8.0-apache
+    restart: unless-stopped
+    networks:
+      - my-network
+    ports:
+      - "8000:80"
+      - "443:443"
+    volumes:
+      - /www:/www
+      - ./apache/000-default.conf:/etc/apache2/sites-enabled/000-default.conf
+      - ./php/php.ini:/usr/local/etc/php/php.ini
+  mysql:
+    image: mysql:8
+    container_name: mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=admin
+    volumes:
+      - /var/mysql:/var/lib/mysql
+    restart: unless-stopped
+    networks:
+      - my-network
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: unless-stopped
+    networks:
+      - my-network
+    depends_on:
+      - mysql
+    ports:
+      - "8183:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_ROOT_PASSWORD: admin
+  mailhog:
+    image: mailhog/mailhog
+    container_name: mailhog
+    logging:
+      driver: 'none'  # disable saving logs
+    ports:
+      - "1025:1025" # smtp server
+      - "8025:8025" # web ui
+    networks:
+      - my-network
+
